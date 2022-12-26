@@ -1,0 +1,51 @@
+	Создание кнопок для постраничной навигации.
+
+Для начала работы необходимо указать количество страниц.
+
+На основе базовых или пользовательских настроек формируется массив с содержимым кнопок постраничной навигации,
+а также номера страниц для кнопок управления: prev, next, first, end.
+Пример: [1, '...', 4,5,6,'...', 10], [1, 2, 3, 4, 5, 6, 7]
+
+Базовая разметка:
+  <div class="pagination-wrapper">
+    <!-- левые кнопки навигации -->
+    <div class="pagination-ctrls-left"></div>
+    <!-- обертка кнопок-страниц -->
+    <div class="pagination"></div>
+    <!-- правые кнопки навигации -->
+    <div class="pagination-ctrls-right"></div>
+  </div>
+
+Инициализация:
+При инициализации указываем селектор или класс контейнера будущих кнопок, а также количество страниц.
+new PaginatorButtons('.pagination', {
+  totalPages: 15,
+ })
+
+Настройки:
+
+{
+        totalPages: null,____________________________обязательный параметр, number;
+        visibleAtLeft: 1,____________________________количество кнопок слева от активной, number;
+        visibleAtRight: 1,___________________________количество кнопок справа от ативной, number;
+        maxCountOfVisible: 7,________________________при каком количестве страниц выводить все кнопки, number;
+        enableDots: false,___________________________нужно ли многоточие, boolean;
+        enablePrevAndNext: true,_____________________нужны ли кнопки prev и next, boolean;
+        prevInnerHtml: '⭠',__________________________содержимое кнопки prev(в виде текста или html(img, svg)), string;
+        nextInnerHtml: '⭢',__________________________содержимое кнопки next, string;
+        enableFirstAndLast: false,___________________нужны ли кнопки в начало и конец, boolean;
+        firstInnerHtml: '⭰',_________________________содержимое кнопки в начало, string;
+        lastInnerHtml: '⭲',__________________________содержимое кнопки в конец, string;
+        hrefValue: './index.html',___________________значение для формирования ссылки(ссылка имеет вид "./index.html?page=10"), string;
+        controlsState: 'disable',____________________состояние кнопок управления в крайних положениях: disable- дефолтное кнопки неактивны, hide - кнопки исчезают
+        paginationClass: "pagination__btn",__________класс кнопок навигации, string;
+        dotClass: "pagination__dot",_________________класс кнопок с "...", string;
+        ctrlsLeftWrapper: "pagination-ctrls-left",___класс обертки кнопок управления слева, string;
+        ctrlsRightWrapper: "pagination-ctrls-right",_класс обертки кнопок управления справа, string;
+        prevClass: "pagination__prev",_______________
+        nextClass: "pagination__next",_______________
+        startClass: "pagination__start",_____________
+        endClass: "pagination__end",_________________
+        currentClass: "current",_____________________класс кнопки текущей страницы, string;
+        disableClass: "disable",_____________________класс неактивной кнопки управления, string;
+      };

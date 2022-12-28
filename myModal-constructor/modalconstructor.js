@@ -43,7 +43,7 @@ function ModalConstructor(triggerSelectorOrEl, userOptions) {
         }
       }.bind(this))
 
-      document.addEventListener('keydown', function (e) {
+      document.addEventListener('keyup', function (e) {
         if (this.isOpen && e.code == 'Escape') this.closeModal();
       }.bind(this))
     },

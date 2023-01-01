@@ -15,7 +15,10 @@ function ModalConstructor(triggerSelectorOrEl, userOptions) {
         modalOverlayClass: "modal-overlay",
         modalWrapperClass: "modal-wrapper",
         modalOpenClass: "modal-open",
-
+        beforeOpen: ()=> {},
+        afterOpen: ()=> {},
+        beforeClose: ()=> {},
+        afterClose: () => {},
       };
       this.options = Object.assign(defaults, userOptions);
       this.isStatic = this.options.isStatic;
@@ -30,22 +33,10 @@ function ModalConstructor(triggerSelectorOrEl, userOptions) {
     },
 
     manageModal() {
-      const {autoOpen, modalCloseBtnClass, modalOverlayClass, modalWrapperClass } = this.options;
+      if(this.options.autoOpen){
+        document.addEventListener('click', this.openByClick.bind(this))
+      }
 
-      document.addEventListener('click', function (e) {
-
-        if (autoOpen && e.target === this.triggerBtn) {
-          this.openModal();
-          this.manageScroll()
-        }
-        if (this.isOpen && (e.target.closest(`.${modalCloseBtnClass}`) || !e.target.closest(`.${modalWrapperClass}`) && e.target.matches(`.${modalOverlayClass}`))) {
-          this.closeModal();
-        }
-      }.bind(this))
-
-      document.addEventListener('keyup', function (e) {
-        if (this.isOpen && e.code == 'Escape') this.closeModal();
-      }.bind(this))
     },
 
     createHtml(options) {
@@ -92,7 +83,7 @@ function ModalConstructor(triggerSelectorOrEl, userOptions) {
       } else this.modalEl = this.createModalOverlay();
 
       this.isOpen = true;
-      this.modalEl.dispatchEvent(new CustomEvent('modalOnOpen', { bubbles: true, cancelable: true, detail: {isOpen: this.isOpen } }))
+      this.modalEl.dispatchEvent(new CustomEvent('modalOnOpen', { bubbles: true, cancelable: true, detail: { isOpen: this.isOpen } }))
 
       this.lastFocusedOutOfModal = document.activeElement;
       this.focusableElems = this.recieveFocusableElems(this.modalEl);
@@ -107,7 +98,8 @@ function ModalConstructor(triggerSelectorOrEl, userOptions) {
         this.setFocus();
         this.catchFocus();
       }, this.animTime)
-
+      document.addEventListener('click', this.closeByClick.bind(this))
+      document.addEventListener('keyup', this.closeByEsc.bind(this))
     },
 
     closeModal() {
@@ -117,7 +109,9 @@ function ModalConstructor(triggerSelectorOrEl, userOptions) {
       this.modalEl.classList.remove(modalOpenClass);
       this.setFocus();
       this.manageScroll();
-      if (!this.isStatic) setTimeout(() => this.modalEl.remove(), this.animTime);
+      if (!this.isStatic) setTimeout(() => {
+        this.modalEl.remove()
+      }, this.animTime);
     },
 
     setTransition() {
@@ -156,7 +150,7 @@ function ModalConstructor(triggerSelectorOrEl, userOptions) {
         let toFocus = this.modalEl.querySelector(elemToFocus)
         if (!toFocus) return;
         toFocus.focus()
-      }else if (this.isOpen && this.focusableElems) {
+      } else if (this.isOpen && this.focusableElems) {
         this.focusableElems[0].focus();
       } else this.lastFocusedOutOfModal.focus()
     },
@@ -176,6 +170,33 @@ function ModalConstructor(triggerSelectorOrEl, userOptions) {
         }
       }.bind(this))
     },
+
+    // handlers
+    openByClick(e) {
+      const { autoOpen } = this.options;
+      if (autoOpen && e.target === this.triggerBtn) {
+        this.options.beforeOpen(e);
+        this.openModal();
+        this.manageScroll();
+        this.options.afterOpen(e)
+      }
+    },
+    closeByClick(e) {
+      const { modalCloseBtnClass, modalOverlayClass, modalWrapperClass } = this.options;
+      if (this.isOpen && (e.target.closest(`.${modalCloseBtnClass}`) || !e.target.closest(`.${modalWrapperClass}`) && e.target.matches(`.${modalOverlayClass}`))) {
+        this.options.beforeClose(e)
+        this.closeModal();
+        this.options.afterClose(e)
+      }
+    },
+    closeByEsc(e) {
+      if (this.isOpen && e.code == 'Escape') {
+        this.options.beforeClose(e)
+        this.closeModal()
+        this.options.afterClose(e)
+      };
+    },
+
 
   };
   this.updateInner = (inner) => {

@@ -129,10 +129,12 @@ function MyTooltip(trigger, userOptions) {
                     this.debounce(this.placeText(), 1000)
                     console.log('resized')
                 }.bind(this))
-                this.getScrollingParent(this.triggerBtn).addEventListener('scroll', function (e) {
-                    this.placeText()
-                    console.log('hello')
-                }.bind(this))
+                const scrollingParent = this.getScrollingParent(this.triggerBtn)
+                if (scrollingParent) {
+                    scrollingParent.addEventListener('scroll', function (e) {
+                        this.placeText()
+                    }.bind(this))
+                }
             };
             if (this.arrow) this.placeArrow();
         },

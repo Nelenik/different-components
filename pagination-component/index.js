@@ -11,22 +11,24 @@ const { el, mount, setChildren } = redom;
   visibleAtRight: def(2) - количество видимых справа от текущей кнопок
   ellipsis: def(false) - нужно ли многоточие,
   controls: {
-      startEnd: {
-        enable: false,
-        startInner: '',
+      startEnd: { - кнопки на первую и посленюю страницу
+        enable: false, -нужны/не нужны
+        startInner: '', содержимое строка, можно в виде Html: '<img src="some.jpg">'
         endInner: '',
       },
-      prevNext: {
-        enable: true,
-        prevInner: 'ᐸ',
+      prevNext: { - конопки предыдущая и следующая
+        enable: true, - нужны/не нужны
+        prevInner: 'ᐸ', - содержимое, строка.
         nextInner: 'ᐳ',
       }
-    }, кнопки управления вперед назад старт ендб
+    }, 
   controlState: def('disable')||'hide' - скрывать или делать неактивными предыдущую и следующую кнопки в конце и начале,
   additionalClass: '', 
   customBtnInner: (num)=>{} - функция должна возвращать html в виде строки. принимает параметр num. это номер кнопки пагинации.
   onClick: (num)=>{}
 }
+
+Свойства: instance.current - можно передать номер страницы, чтобы переключить вручную
 */
 
 class Pagination {

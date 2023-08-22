@@ -5,3 +5,4 @@
 4. SetFocus - helps to set correct focus to grid elements, that contains interactive elements and whose placement was changed by 'order' property
 5. MyTooltip - makes tooltips, needs improvement
 6. Pagination - new version of pagination buttons, in this version added possibility to add custom view of buttons by own html.
+7. Select - custom select based on radiobuttons group

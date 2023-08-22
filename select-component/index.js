@@ -60,27 +60,32 @@ const toSort = [
 ]
 
 /*
-Простой селект, единичный выбор, поиск, автодополнение, построен на базе группы радиокнопок (нужна именно группа с одинаковым name, для правильной навигации), можно указывать изначально выбранный элемент указав true в свойстве selected, в качестве аргументов принимает:
+Простой селект, единичный выбор, поиск, автодополнение, построен на базе группы радиокнопок (нужна именно группа с одинаковым name, для правильной навигации).
+Все доступные настройки для каждой опции указываем в массиве selectContent.Можно указывать изначально выбранный элемент указав true в свойстве selected, также в свойстве uniqueModificator можно указать уникальный для каждого айтема модификатор который будет добавлен в качестве дополнительного класса. Например: uniqueModificator: 'green' -> к select__item добавится класс select__item--green.
+
+Инициализация:
 const mySelect = new Select(options);
+
+Опции:
 --options: {
-  const selectContent = [
-  { text: 'По номеру', value: 'account', name: 'sort', selected: false },
-  { text: 'По балансу', value: 'balance', name: 'sort', selected: false },
-  { text: 'По последней транзакции', value: 'transactions.0.date', name: 'sort', selected: true },
+  selectContent: [
+  { text: 'По номеру', value: 'account', name: 'sort', selected: false, uniqueModificator: '' },
+  { text: 'По балансу', value: 'balance', name: 'sort', selected: false, uniqueModificator: '' },
+  { text: 'По последней транзакции', value: 'transactions.0.date', name: 'sort', selected: true, uniqueModificator: '' },
 ];
-  onSelect: (instance, value)=>{},(получает экземпляр и значение селекта, срабатывает при выборе опции, т.е.в данном случае радиокнопки)
+  onSelect: (instance, value)=>{},(получает экземпляр и значение селекта)
   onOpen: (instance)=>{},
   onClose: (instance)=>{},
   onInput: (instance, inputValue)=>{},(работает с triggerType: 'text', при вводе в инпут, получает экземпляр и значение инпута),
-  onValueChange: (instance, value)=>{} (срабатывает при изменении значения селекта, которое происходит при прямом вводе если это triggerType:'text' или после закрытия выпадашки. Имеет смысл использовать только с triggerType: 'text', т.к в противном случае данная опция совпадает с  onSelect)
+  onValueChange: (instance, inputValue)=>{} (срабатывает при изменении значения селекта)
   additionalClass: 'some-class',(доп. класс добавляется к обертке селекта, полезно при стилизации разных селектов)
   placeholderText: 'some-text',(название списка),
   toChangePlaceholder: true(def), (нужно ли изменять плейсхолдер при выборе)
   triggerType: 'button'(def), (тип дропдауна, если нужно текстовое поле с автодополнением нужно указать 'text')
 }
 --методы:
-mySelect.appendEl(target) - target -это элемент в который вставляем селект, в конец
-mySelect.prependEl(target)- target -это элемент в который вставляем селект в начало
+mySelect.appendAt(target) - target -это элемент в который вставляем селект, в конец
+mySelect.prependAt(target)- target -это элемент в который вставляем селект в начало
 mySelect.reset() - сбрасываем выбраныне значения полностью, даже если были изначально выбранные,
 mySelect.changeValue(newValue) - позволяет изменять на лету значение селекта. в newValue передается строка
 
@@ -93,13 +98,13 @@ mySelect.selectContent = массив со значениями радиокно
 --нужно быть осторожным с полем 'name' для других элементов формы, чтобы не было конфликта, также при использовании FormData полученный объект нужно будет отредактировать вручную, т.к. радиокнопка туда попадет.
 --при использовании внутри формы, чтобы при выборе enter-ом не отправилась форма, в обработчике в самом начале пишем: form.addEventListener('submit',(e)=>{
   e.preventDefault();
-  if (document.activeElement == e.target.transSelect) return;
+  if (document.activeElement == e.target.{tirgger name atrr}) return;
 
   ---далее нужный код---
 })
 */
 
-class Select {
+export class Select {
 	constructor(options) {
 		const {
 			selectContent,
@@ -165,13 +170,16 @@ class Select {
 		this.dropdown.innerHTML = '';
 		this._selectContent = value;
 		this.radioWrap = value?.map((item) => {
+      console.log(item.selected)
 			const radioBtn = el('input.select__def-radio', {
 				type: 'radio',
 				value: item.value,
 				name: item.name,
-				checked: item.selected,
+				checked: item.selected || false,
 			});
-			const radioLabel = el('label.select__item');
+//       если есть модификатор переданный прописываем его если нет то пустую строку
+      let labelModificator = item.itemModificator? `select__item--${item.itemModificator}`: '';
+			const radioLabel = el(`label.select__item.${labelModificator}`);
 			setChildren(radioLabel, [
 				radioBtn,
 				el('span.select__item-text', item.text),
@@ -182,8 +190,10 @@ class Select {
 			this.radioHandlers(radioBtn);
 			return radioLabel;
 		});
+    console.log(this.radioWrap)
 		setChildren(this.dropdown, this.radioWrap);
 		this.radioBtns = [...this.dropdown.querySelectorAll('input[type="radio"]')];
+    
 	}
 
 	get selectContent() {
@@ -224,6 +234,9 @@ class Select {
 		if (radioBtn.checked) {
 			this.isSelected = radioBtn;
 			this.selectValue = this.isSelected.value;
+//      добавляем класс с модификатором --selected лейблу выбранной радиокнопки
+      if(this.radioWrap) this.radioWrap.forEach((item)=>item.classList.remove('select__item--selected'))
+      this.isSelected.closest('.select__item').classList.add('select__item--selected');
 
 			if (this.toChangePlaceholder) {
 				if (this.isSelect()) {
@@ -359,6 +372,7 @@ class Select {
 		this.selectValue = '';
 		// this.isSelected.checked = false;
 		this.prevActive = null;
+    this.isSelected.closest('.select__item').classList.remove('select__item--selected');
 		this.isSelected = null;
 		if (this.isSelect()) {
 			this.selectTrigger.textContent = this.placeholderText;

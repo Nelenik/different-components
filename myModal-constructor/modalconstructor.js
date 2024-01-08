@@ -1,5 +1,4 @@
-
-function ModalConstructor(triggerSelectorOrEl, userOptions) {
+export function ModalConstructor(triggerSelectorOrEl, userOptions) {
   this.core = {
     main() {
       let defaults = {
@@ -8,24 +7,23 @@ function ModalConstructor(triggerSelectorOrEl, userOptions) {
         modalInner: null,
         enableTransition: true,
         animTime: null,
-        easing: 'ease',
+        easing: "ease",
         elemToFocus: null,
         // classes
         modalCloseBtnClass: null,
         modalOverlayClass: "modal-overlay",
         modalWrapperClass: "modal-wrapper",
-        modalOpenClass: "modal-open",
-        ariaLabelledbyId: '',
-        beforeOpen: ()=> {},
-        afterOpen: ()=> {},
-        beforeClose: ()=> {},
-        afterClose: () => {},
+        modalAnimationClass: "modalInitAnim",
+        modalInAnimClass: "openAnim",
+        modalOutAnimClass: "outAnim",
       };
       this.options = Object.assign(defaults, userOptions);
       this.isStatic = this.options.isStatic;
       this.animTime = this.options.animTime;
-      const isString = (typeof triggerSelectorOrEl === 'string');
-      this.triggerBtn = isString ? document.querySelector(triggerSelectorOrEl) : triggerSelectorOrEl;
+      const isString = typeof triggerSelectorOrEl === "string";
+      this.triggerBtn = isString
+        ? document.querySelector(triggerSelectorOrEl)
+        : triggerSelectorOrEl;
       this.isOpen = false;
       this.modalEl;
       this.lastFocusedOutOfModal;
@@ -34,10 +32,37 @@ function ModalConstructor(triggerSelectorOrEl, userOptions) {
     },
 
     manageModal() {
-      if(this.options.autoOpen){
-        document.addEventListener('click', this.openByClick.bind(this))
-      }
+      const {
+        autoOpen,
+        modalCloseBtnClass,
+        modalOverlayClass,
+        modalWrapperClass,
+      } = this.options;
 
+      document.addEventListener(
+        "click",
+        function (e) {
+          if (autoOpen && e.target.closest("button") === this.triggerBtn) {
+            this.openModal();
+            this.manageScroll();
+          }
+          if (
+            this.isOpen &&
+            (e.target.closest(`.${modalCloseBtnClass}`) ||
+              (!e.target.closest(`.${modalWrapperClass}`) &&
+                e.target.matches(`.${modalOverlayClass}`)))
+          ) {
+            this.closeModal();
+          }
+        }.bind(this)
+      );
+
+      document.addEventListener(
+        "keydown",
+        function (e) {
+          if (this.isOpen && e.code == "Escape") this.closeModal();
+        }.bind(this)
+      );
     },
 
     createHtml(options) {
@@ -53,66 +78,76 @@ function ModalConstructor(triggerSelectorOrEl, userOptions) {
       return tag;
     },
     createModalOverlay() {
-      const { modalOverlayClass } = this.options;
+      const { modalOverlayClass, modalAnimationClass } = this.options;
       const overlay = this.createHtml({
-        tagName: 'div',
-        classes: [modalOverlayClass],
-
-      })
+        tagName: "div",
+        classes: [modalOverlayClass, modalAnimationClass],
+      });
       overlay.append(this.createModalWrapper());
       document.body.append(overlay);
-      return overlay
+      return overlay;
     },
 
     createModalWrapper() {
-      const {ariaLabelledbyId, modalInner, modalWrapperClass } = this.options;
+      const { modalInner, modalWrapperClass } = this.options;
       if (!modalInner) return;
-      let isObject = typeof modalInner === 'object';
+      let isObject = typeof modalInner === "object";
       const wrapper = this.createHtml({
-        tagName: 'div',
+        tagName: "div",
         classes: [modalWrapperClass],
-        attributes: { "tabindex": '0', role: 'dialog', 'aria-labelledby': `${ariaLabelledbyId}` }
-      })
-      isObject ? wrapper.append(modalInner) : wrapper.innerHTML = modalInner;
-      return wrapper
+        attributes: { tabindex: "0" },
+      });
+      isObject ? wrapper.append(modalInner) : (wrapper.innerHTML = modalInner);
+      return wrapper;
     },
 
     openModal() {
-      const { modalOpenClass } = this.options;
+      const { modalInAnimClass } = this.options;
       if (this.isStatic) {
-        this.modalEl = document.querySelector(`[data-modal="${this.triggerBtn.dataset.path}"]`)
+        this.modalEl = document.querySelector(
+          `[data-modal="${this.triggerBtn.dataset.path}"]`
+        );
       } else this.modalEl = this.createModalOverlay();
 
       this.isOpen = true;
-      this.modalEl.dispatchEvent(new CustomEvent('modalOnOpen', { bubbles: true, cancelable: true, detail: { isOpen: this.isOpen } }))
+      this.modalEl.dispatchEvent(
+        new CustomEvent("modalOnOpen", {
+          bubbles: true,
+          cancelable: true,
+          detail: { isOpen: this.isOpen },
+        })
+      );
 
       this.lastFocusedOutOfModal = document.activeElement;
       this.focusableElems = this.recieveFocusableElems(this.modalEl);
 
       setTimeout(() => {
-        this.modalEl.classList.add(modalOpenClass);
+        this.modalEl.classList.add(modalInAnimClass);
         this.setTransition();
-
       }, 0);
 
       setTimeout(() => {
         this.setFocus();
         this.catchFocus();
-      }, this.animTime)
-      document.addEventListener('click', this.closeByClick.bind(this))
-      document.addEventListener('keyup', this.closeByEsc.bind(this))
+      }, this.animTime);
     },
 
     closeModal() {
-      const { modalOpenClass } = this.options;
+      const { modalInAnimClass, modalOutAnimClass } = this.options;
       this.isOpen = false;
-      this.modalEl.dispatchEvent(new CustomEvent('modalOnClose', { bubbles: true, cancelable: true, detail: { isOpen: this.isOpen } }));
-      this.modalEl.classList.remove(modalOpenClass);
+      this.modalEl.dispatchEvent(
+        new CustomEvent("modalOnClose", {
+          bubbles: true,
+          cancelable: true,
+          detail: { isOpen: this.isOpen },
+        })
+      );
+      this.modalEl.classList.remove(modalInAnimClass);
+      this.modalEl.classList.add(modalOutAnimClass);
       this.setFocus();
       this.manageScroll();
-      if (!this.isStatic) setTimeout(() => {
-        this.modalEl.remove()
-      }, this.animTime);
+      if (!this.isStatic)
+        setTimeout(() => this.modalEl.remove(), this.animTime);
     },
 
     setTransition() {
@@ -123,82 +158,70 @@ function ModalConstructor(triggerSelectorOrEl, userOptions) {
 
     manageScroll() {
       let body = document.body;
-      let scrollWidth = window.innerWidth - body.offsetWidth + 'px';
-      let fixedEl = document.querySelectorAll('.fixed-el');
+      let scrollWidth = window.innerWidth - body.offsetWidth + "px";
+      let fixedEl = document.querySelectorAll(".fixed-el");
       if (this.isOpen) {
-        body.style.overflow = 'hidden';
+        body.style.overflow = "hidden";
         body.style.paddingRight = scrollWidth;
-        fixedEl.forEach(el => { el.style.paddingRight = scrollWidth });
+        fixedEl.forEach((el) => {
+          el.style.paddingRight = scrollWidth;
+        });
       } else {
-        body.style.overflow = 'auto';
-        body.style.paddingRight = '';
-        fixedEl.forEach(el => { el.style.paddingRight = '' });
+        body.style.overflow = "auto";
+        body.style.paddingRight = "";
+        fixedEl.forEach((el) => {
+          el.style.paddingRight = "";
+        });
       }
     },
 
     recieveFocusableElems(el) {
-      let focusableElementsString = 'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, [tabindex], [contenteditable]';
+      let focusableElementsString =
+        "a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, [tabindex], [contenteditable]";
       let elemsArray = [...el.querySelectorAll(focusableElementsString)];
-      let result = elemsArray.filter(i => !i.hasAttribute('tabindex') || (i.hasAttribute('tabindex') && i.getAttribute('tabindex') >= 0))
+      let result = elemsArray.filter(
+        (i) =>
+          !i.hasAttribute("tabindex") ||
+          (i.hasAttribute("tabindex") && i.getAttribute("tabindex") >= 0)
+      );
       result = result.length > 0 ? result : false;
-      return result
+      return result;
     },
 
     setFocus() {
-      let { elemToFocus } = this.options
+      let { elemToFocus } = this.options;
 
       if (this.isOpen && elemToFocus) {
-        let toFocus = this.modalEl.querySelector(elemToFocus)
+        let toFocus = this.modalEl.querySelector(elemToFocus);
         if (!toFocus) return;
-        toFocus.focus()
+        toFocus.focus();
       } else if (this.isOpen && this.focusableElems) {
         this.focusableElems[0].focus();
-      } else this.lastFocusedOutOfModal.focus()
+      } else this.lastFocusedOutOfModal.focus();
     },
 
     catchFocus() {
       let focArr = this.focusableElems;
       let firstFocused = focArr[0];
       let lastFocused = focArr[focArr.length - 1];
-      this.modalEl.addEventListener('keydown', function (e) {
-        if (e.code == 'Tab' && e.shiftKey && document.activeElement == firstFocused) {
-          e.preventDefault();
-          lastFocused.focus()
-        }
-        if (e.code == 'Tab' && document.activeElement == lastFocused) {
-          e.preventDefault();
-          firstFocused.focus()
-        }
-      }.bind(this))
+      this.modalEl.addEventListener(
+        "keydown",
+        function (e) {
+          if (
+            e.code == "Tab" &&
+            e.shiftKey &&
+            document.activeElement == firstFocused
+          ) {
+            e.preventDefault();
+            lastFocused.focus();
+          }
+          if (e.code == "Tab" && document.activeElement == lastFocused) {
+            e.preventDefault();
+            firstFocused.focus();
+          }
+        }.bind(this)
+      );
     },
-
-    // handlers
-    openByClick(e) {
-      const { autoOpen } = this.options;
-      if (autoOpen && e.target === this.triggerBtn) {
-        this.options.beforeOpen(e);
-        this.openModal();
-        this.manageScroll();
-        this.options.afterOpen(e)
-      }
-    },
-    closeByClick(e) {
-      const { modalCloseBtnClass, modalOverlayClass, modalWrapperClass } = this.options;
-      if (this.isOpen && (e.target.closest(`.${modalCloseBtnClass}`) || !e.target.closest(`.${modalWrapperClass}`) && e.target.matches(`.${modalOverlayClass}`))) {
-        this.options.beforeClose(e)
-        this.closeModal();
-        this.options.afterClose(e)
-      }
-    },
-    closeByEsc(e) {
-      if (this.isOpen && e.code == 'Escape') {
-        this.options.beforeClose(e)
-        this.closeModal()
-        this.options.afterClose(e)
-      };
-    },
-
-
   };
   this.updateInner = (inner) => {
     if (inner) {
@@ -206,13 +229,13 @@ function ModalConstructor(triggerSelectorOrEl, userOptions) {
     }
   };
   this.open = () => {
-    this.core.openModal()
-    this.core.manageScroll()
+    this.core.openModal();
+    this.core.manageScroll();
   };
   this.close = () => {
-    this.core.closeModal()
+    this.core.closeModal();
   };
   this.core.main();
 }
 
-window.ModalConstructor = ModalConstructor;
+// window.ModalConstructor = ModalConstructor;

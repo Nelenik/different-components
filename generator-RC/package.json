@@ -1,0 +1,20 @@
+{
+  "name": "generator-rc",
+  "version": "0.1.0",
+  "description": "",
+  "type": "commonjs",
+  "files": [
+    "generators"
+  ],
+  "main": "generators/index.js",
+  "keywords": [
+    "yeoman-generator"
+  ],
+  "dependencies": {
+    "mkdirp": "^3.0.1",
+    "yeoman-generator": "^2.0.1"
+  },
+  "env": {
+    "node": true
+  }
+}

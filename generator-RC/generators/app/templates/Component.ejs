@@ -1,0 +1,12 @@
+<%_ if (withStyles) { -%>
+<%_ if (withModule) { -%>
+import styles from './<%= stylesName %>';
+<% } else {-%>
+import './<%= stylesName %>';
+<% } -%>
+<% } %>
+export const <%= componentName %> = () => {
+    return (
+
+    )
+}

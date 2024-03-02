@@ -1,4 +1,4 @@
-export function ModalConstructor(triggerSelectorOrEl, userOptions) {
+function ModalConstructor(triggerSelectorOrEl, userOptions) {
   this.core = {
     main() {
       let defaults = {
@@ -28,41 +28,41 @@ export function ModalConstructor(triggerSelectorOrEl, userOptions) {
       this.modalEl;
       this.lastFocusedOutOfModal;
       this.focusableElems;
-      this.manageModal();
+
+      this.handleDocumentClick = this.handleDocumentClick.bind(this);
+      this.handleDocumentKeydown = this.handleDocumentKeydown.bind(this);
+      document.addEventListener("click", this.handleDocumentClick);
+      document.addEventListener("keydown", this.handleDocumentKeydown);
     },
 
-    manageModal() {
+    handleDocumentClick(event) {
       const {
         autoOpen,
         modalCloseBtnClass,
         modalOverlayClass,
         modalWrapperClass,
       } = this.options;
+      if (autoOpen && event.target.closest("button") === this.triggerBtn) {
+        this.openModal();
+        this.manageScroll();
+      }
+      if (
+        this.isOpen &&
+        (event.target.closest(`.${modalCloseBtnClass}`) ||
+          (!event.target.closest(`.${modalWrapperClass}`) &&
+            event.target.matches(`.${modalOverlayClass}`)))
+      ) {
+        this.closeModal();
+      }
+    },
 
-      document.addEventListener(
-        "click",
-        function (e) {
-          if (autoOpen && e.target.closest("button") === this.triggerBtn) {
-            this.openModal();
-            this.manageScroll();
-          }
-          if (
-            this.isOpen &&
-            (e.target.closest(`.${modalCloseBtnClass}`) ||
-              (!e.target.closest(`.${modalWrapperClass}`) &&
-                e.target.matches(`.${modalOverlayClass}`)))
-          ) {
-            this.closeModal();
-          }
-        }.bind(this)
-      );
+    handleDocumentKeydown(event) {
+      if (this.isOpen && event.code == "Escape") this.closeModal();
+    },
 
-      document.addEventListener(
-        "keydown",
-        function (e) {
-          if (this.isOpen && e.code == "Escape") this.closeModal();
-        }.bind(this)
-      );
+    removeHandlers() {
+      document.removeEventListener("click", this.handleDocumentClick);
+      document.removeEventListener("keydown", this.handleDocumentKeydown);
     },
 
     createHtml(options) {
@@ -146,6 +146,7 @@ export function ModalConstructor(triggerSelectorOrEl, userOptions) {
       this.modalEl.classList.add(modalOutAnimClass);
       this.setFocus();
       this.manageScroll();
+      this.removeHandlers();
       if (!this.isStatic)
         setTimeout(() => this.modalEl.remove(), this.animTime);
     },

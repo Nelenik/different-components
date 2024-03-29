@@ -1,8 +1,8 @@
 // "use strict";
-const Generator = require("yeoman-generator");
-const mkdirp = require("mkdirp");
+import Generator from "yeoman-generator";
+import { sync } from "mkdirp";
 
-module.exports = class extends Generator {
+export default class extends Generator {
   constructor(args, opts) {
     // Calling the super constructor is important so our generator is correctly set up
     super(args, opts);
@@ -34,7 +34,7 @@ module.exports = class extends Generator {
     let componentExt = this.options.ts ? "tsx" : "jsx";
     let reexportExt = this.options.ts ? "ts" : "js";
 
-    const dir = mkdirp.sync(`${this.options.path}/${capitalizeComponentName}`);
+    const dir = sync(`${this.options.path}/${capitalizeComponentName}`);
     let stylesExt = "css";
 
     if (this.options.less) stylesExt = "less";
@@ -143,4 +143,4 @@ module.exports = class extends Generator {
       default: false,
     });
   }
-};
+}
